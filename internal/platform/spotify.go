@@ -53,6 +53,25 @@ func FetchMetadata(URL string) ([]models.Track, error) {
 		colly.AllowedDomains("open.spotify.com"),
 	)
 
+	var visitErr error
+
+	c.OnResponse(func(r *colly.Response) {
+		if r.StatusCode != 200 {
+			visitErr = fmt.Errorf("unexpected status code: %d", r.StatusCode)
+			return
+		}
+		body := strings.ToLower(string(r.Body))
+		if strings.Contains(body, "page not found") || strings.Contains(body, "this content is not available") || strings.Contains(body, "playlist is private") {
+			visitErr = fmt.Errorf("playlist not available or private")
+			return
+		}
+	})
+
+	c.OnError(func(r *colly.Response, er error) {
+		// network / request error
+		visitErr = fmt.Errorf("request failed: %w", er)
+	})
+
 	// htmlElm := "ol[aria-label=Track list]"
 	c.OnHTML("li", func(h *colly.HTMLElement) {
 		var currentTrack models.Track
@@ -100,6 +119,10 @@ func FetchMetadata(URL string) ([]models.Track, error) {
 	})
 
 	c.Visit(scrapeURL)
+
+	if visitErr != nil {
+		return []models.Track{}, visitErr
+	}
 
 	return playlistTracks, nil
 }

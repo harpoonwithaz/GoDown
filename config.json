@@ -1,0 +1,10 @@
+{
+  "download_path": "./downloads",
+  "workers": 3,
+  "retries": [
+    { "query_suffix": "Topic", "tolerance": 5 },
+    { "query_suffix": "Official Audio", "tolerance": 15 },
+    { "query_suffix": "", "tolerance": 60 }
+  ],
+  "debug_mode": false
+}

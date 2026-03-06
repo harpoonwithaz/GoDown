@@ -8,22 +8,16 @@ import (
 	"strings"
 )
 
-type DownloadOptions struct {
-	Tolerances []int
-	Queries    []string
-	Output     string
-}
-
 // Download individual track using yt-dlp
-func DownloadTrack(ctx context.Context, track models.Track, options DownloadOptions, debugging bool) error {
-	maxRetries := len(options.Tolerances)
+func DownloadTrack(ctx context.Context, track models.Track, cfg *models.Config) error {
+	maxRetries := len((*cfg).Retries)
 
-	for i, tolerance := range options.Tolerances {
-		searchQuery := track.FullQuery(options.Queries[i])
+	for i, retry := range (*cfg).Retries {
+		searchQuery := track.FullQuery(retry.QuerySuffix)
 
 		matchFilter := fmt.Sprintf("duration >= %d & duration <= %d",
-			track.DurationSec-tolerance,
-			track.DurationSec+tolerance,
+			track.DurationSec-retry.Tolerance,
+			track.DurationSec+retry.Tolerance,
 		)
 
 		args := []string{
@@ -32,8 +26,11 @@ func DownloadTrack(ctx context.Context, track models.Track, options DownloadOpti
 			"--extract-audio",
 			"--audio-format", "mp3",
 			"--audio-quality", "0",
-			"--output", options.Output,
+			"--add-metadata",
+			"-P", (*cfg).DownloadPath,
+			"-o", "%(title)s.%(ext)s",
 			"--no-playlist",
+			"--embed-thumbnail",
 		}
 
 		cmd := exec.CommandContext(ctx, "yt-dlp", args...)
@@ -42,7 +39,7 @@ func DownloadTrack(ctx context.Context, track models.Track, options DownloadOpti
 
 		// Handle Hard Errors (Network down, binary missing, etc.)
 		if err != nil && !strings.Contains(outputStr, "does not pass filter") {
-			if debugging {
+			if (*cfg).Debug {
 				fmt.Printf("[ENGINE] DEBUG: Hard Error on attempt %d: %v\n", i+1, outputStr)
 			}
 			// If it's the last attempt, return the error. Otherwise, try next fallback.
@@ -54,13 +51,13 @@ func DownloadTrack(ctx context.Context, track models.Track, options DownloadOpti
 
 		// Handle Filter Skips
 		if strings.Contains(outputStr, "does not pass filter") {
-			fmt.Printf("[ENGINE] Attempt %d: No match within ±%ds. Widening...\n", i+1, tolerance)
+			fmt.Printf("[ENGINE] Attempt %d: No match within ±%ds. Widening...\n", i+1, retry.Tolerance)
 			continue
 		}
 
 		// Handle Success
 		if strings.Contains(outputStr, "[download] Destination:") || strings.Contains(outputStr, "has already been downloaded") {
-			fmt.Printf("[ENGINE] Success downloading: %s (Tolerance: %ds)\n", track.Title, tolerance)
+			fmt.Printf("[ENGINE] Success downloading: %s (Tolerance: %ds)\n", track.Title, retry.Tolerance)
 			return nil
 		}
 	}
