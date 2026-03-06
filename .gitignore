@@ -35,5 +35,6 @@ go.work.sum
 test.html
 test_ytdlp.bat
 test_queries.txt
+fyneTest.go
 
 /downloads
