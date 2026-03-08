@@ -1,4 +1,4 @@
-# spotify-playlist-downloader
+# GoDown
 
 Pretty much a spotify and yt-dlp wrapper
 
