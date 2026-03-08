@@ -31,11 +31,33 @@ go.work.sum
 # .idea/
 .vscode/
 
+node_modules
+
+
 # RANDOM SHIT LOL
-test.html
-test_ytdlp.bat
-test_queries.txt
-fyneTest.go
 
 /downloads
-/temporary
+
+# Build output
+/build/
+
+# Frontend build artifacts and caches
+/frontend/dist/
+/frontend/.vite/
+/frontend/node_modules/
+/frontend/.cache/
+
+# Wails runtime/node modules
+/wailsjs/runtime/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and env variants
+*.log
+.env.local
+.env.*.local
+
+# TypeScript incremental files
+*.tsbuildinfo

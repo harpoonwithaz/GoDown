@@ -30,3 +30,14 @@ func LoadConfig(path string) (*Config, error) {
 
 	return &cfg, nil
 }
+
+func SaveConfig(path string, cfg *Config) error {
+	//Convert struct to JSON (with 4-space indent for readability)
+	data, err := json.MarshalIndent(cfg, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	//Write the bytes to the file (Permissions: 0644)
+	return os.WriteFile(path, data, 0644)
+}
