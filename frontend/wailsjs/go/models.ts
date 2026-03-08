@@ -19,6 +19,7 @@ export namespace models {
 	    workers: number;
 	    retries: RetryLevel[];
 	    debug_mode: boolean;
+	    light_mode: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -30,6 +31,7 @@ export namespace models {
 	        this.workers = source["workers"];
 	        this.retries = this.convertValues(source["retries"], RetryLevel);
 	        this.debug_mode = source["debug_mode"];
+	        this.light_mode = source["light_mode"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

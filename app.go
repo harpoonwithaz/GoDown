@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"GoDown/internal/downloader"
@@ -60,42 +61,66 @@ func (a *App) GetConfig() *models.Config {
 	return a.config
 }
 
-// DownloadPlaylist is what your Svelte button will call
 func (a *App) DownloadPlaylist(url string) string {
 	tracks, err := platform.FetchMetadata(url)
 	if err != nil {
-		return fmt.Sprintf("Error fetching metadata: %v", err)
+		return fmt.Sprintf("Error: %v", err)
 	}
 
-	tracksAmount := len(tracks)
-	jobs := make(chan models.Track, tracksAmount)
-	results := make(chan error, tracksAmount)
-	var wg sync.WaitGroup
-
-	// Start workers based on your config
-	for w := 1; w <= a.config.Workers; w++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for track := range jobs {
-				// We use context.Background() for now to keep it simple
-				downloader.DownloadTrack(context.Background(), track, a.config)
-				results <- nil // Simplified for this basic version
-			}
-		}()
+	// Use a helper to generate consistent IDs
+	getID := func(t models.Track) string {
+		return fmt.Sprintf("%s-%s-%d", t.Title, strings.Join(t.Artists, ","), t.DurationSec)
 	}
 
-	// Feed tracks to workers
+	// 1. Queue them all immediately so the UI creates the divs
 	for _, t := range tracks {
-		jobs <- t
+		runtime.EventsEmit(a.ctx, "download_progress", map[string]interface{}{
+			"id":     getID(t),
+			"title":  t.Title,
+			"status": "Queued",
+		})
 	}
-	close(jobs)
 
-	// Wait for completion in a goroutine so we don't block the UI thread
+	// 2. Wrap the worker logic in a goroutine so the function returns immediately
 	go func() {
+		jobs := make(chan models.Track, len(tracks))
+		var wg sync.WaitGroup
+
+		for w := 1; w <= a.config.Workers; w++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for track := range jobs {
+					trackID := getID(track) // MUST match the ID above
+
+					// Update to Downloading
+					runtime.EventsEmit(a.ctx, "download_progress", map[string]interface{}{
+						"id":     trackID,
+						"status": "Downloading...",
+					})
+
+					err := downloader.DownloadTrack(context.Background(), track, a.config)
+
+					finalStatus := "Completed"
+					if err != nil {
+						finalStatus = "Failed"
+					}
+
+					// Update to Finished
+					runtime.EventsEmit(a.ctx, "download_progress", map[string]interface{}{
+						"id":     trackID,
+						"status": finalStatus,
+					})
+				}
+			}()
+		}
+
+		for _, t := range tracks {
+			jobs <- t
+		}
+		close(jobs)
 		wg.Wait()
-		close(results)
 	}()
 
-	return fmt.Sprintf("Started downloading %d tracks...", tracksAmount)
+	return fmt.Sprintf("Queued %d tracks", len(tracks))
 }

@@ -15,6 +15,7 @@ type Config struct {
 	Workers      int          `json:"workers"`
 	Retries      []RetryLevel `json:"retries"`
 	Debug        bool         `json:"debug_mode"`
+	LightMode    bool         `json:"light_mode"`
 }
 
 func LoadConfig(path string) (*Config, error) {

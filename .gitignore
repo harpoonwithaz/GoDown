@@ -27,26 +27,39 @@ go.work.sum
 # env file
 .env
 
+# Environment variants
+.env.local
+.env.*.local
+
 # Editor/IDE
-# .idea/
+.idea/
 .vscode/
 
-node_modules
-test_files
+# Node / frontend
+node_modules/
+test_files/
 
-# RANDOM SHIT LOL
-/downloads
+# Misc
+/downloads/
 test.go
 test.html
 
 # Build output
 /build/
 
+# Common build folders
+/bin/
+/dist/
+
 # Frontend build artifacts and caches
 /frontend/dist/
 /frontend/.vite/
 /frontend/node_modules/
 /frontend/.cache/
+
+# Frontend tooling caches
+.parcel-cache/
+.cache/
 
 # Wails runtime/node modules
 /wailsjs/runtime/node_modules/
@@ -55,10 +68,24 @@ test.html
 .DS_Store
 Thumbs.db
 
+# IDE / editor temporary files
+*.swp
+*.swo
+
 # Logs and env variants
 *.log
-.env.local
-.env.*.local
+
+# npm / yarn
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # TypeScript incremental files
 *.tsbuildinfo
+
+# Coverage
+coverage.out
+
+# Go test binaries and artifacts
+*.test
