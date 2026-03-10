@@ -56,9 +56,9 @@ func DownloadTrack(ctx context.Context, track models.Track, cfg *models.Config) 
 				fmt.Printf("[ENGINE] Success: %s (Tolerance: %ds) via *%v*\n", track.Title, retry.Tolerance, searchQuery)
 				return nil
 			}
+			fmt.Printf("[ENGINE] Attempt %d: No match for %s within ±%ds with query *%v*. Moving to next retry level...\n", i+1, track.Title, retry.Tolerance, searchQuery)
 		}
 
-		fmt.Printf("[ENGINE] Attempt %d: No match for %s within ±%ds. Moving to next retry level...\n", i+1, track.Title, retry.Tolerance)
 	}
 
 	return fmt.Errorf("failed to download %s after %d levels of retries", track.Title, maxRetries)
