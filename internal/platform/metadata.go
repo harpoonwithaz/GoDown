@@ -26,7 +26,7 @@ func FetchMetadata(URL string) ([]models.Track, error) {
 		switch pathSegments[0] {
 		case "track":
 			tracks, err = SpotifyTrackMetadata(url)
-		case "playlist":
+		case "playlist", "album":
 			tracks, err = SpotifyPlaylistMetadata(url)
 		}
 
